@@ -18,7 +18,7 @@ class Card_view(pygame.sprite.Sprite):
         self.changeble = True
         self.chosen = False
 
-    def update(self, size, *args):
+    def update(self, n, size, *args):
         if self.changeble and args and args[0].type == pygame.MOUSEBUTTONDOWN and \
                 self.rect.collidepoint(args[0].pos):
             if self.hidden:
@@ -29,6 +29,8 @@ class Card_view(pygame.sprite.Sprite):
                 self.rect = self.image.get_rect()
                 self.rect.x = x
                 self.rect.y = y
+                if n:
+                    self.changeble = False
             else:
                 self.chosen = not self.chosen
                 if self.changeble and self.chosen:
