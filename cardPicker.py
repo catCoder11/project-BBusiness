@@ -10,7 +10,6 @@ sprites_cards = pygame.sprite.Group()
 class CardChooser(pycards.CardBoard):
     def __init__(self, width, height, left=80, top=10, size = 160):
         super().__init__(width, height, left, top, size)
-        self.n = 0
 
     def render(self, screen):
         sprites_cards.draw(screen)
@@ -38,19 +37,11 @@ class CardChooser(pycards.CardBoard):
                 if event.type == pygame.QUIT:
                     running = False
                 for card in given:
-                    count += card.draw.update(self.size, event)
+                    count += card.draw.update(0, self.size, event)
             pygame.display.flip()
         for card in given:
             if card.draw.chosen:
                 chosen.append(card)
         return chosen
-
-if __name__ == '__main__':
-    pygame.init()
-    pygame.display.set_caption('берите карты')
-    size = width, height = 900, 860
-    screen = pygame.display.set_mode(size)
-    place = CardChooser(5, 3)
-    roles = place.run(screen)
 
 
