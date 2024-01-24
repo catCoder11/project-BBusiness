@@ -4,88 +4,60 @@ import utils
 
 
 class Card_view(pygame.sprite.Sprite):
-    hide = utils.load_image("hide.jpg")
-    hide = pygame.transform.scale(hide, (100, 200))
-    def __init__(self, x, y, *group, key="uno.png"):
+    def __init__(self, x, y, *group, key="uno.png", s=(100, 200)):
         super().__init__(*group)
-        self.open = utils.load_image(key)
-        self.open = pygame.transform.scale(self.open, (100, 200))
+        hide = utils.load_image("hide.jpg")
+        self.s = s
+        self.hide = pygame.transform.scale(hide, s)
+        self.open = pygame.transform.scale(utils.load_image(key), s)
+        self.hidden = True
+        self.changeble = True
+        self.chosen = False
         self.image = self.hide
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.hidden = True
-        self.changeble = True
-        self.chosen = False
 
-    def update(self, n, size, *args):
+    def update(self, n, *args):
         if self.changeble and args and args[0].type == pygame.MOUSEBUTTONDOWN and \
                 self.rect.collidepoint(args[0].pos):
-            if self.hidden:
-                self.hidden = False
-                x = self.rect.x
-                y = self.rect.y
-                self.image = self.open
-                self.rect = self.image.get_rect()
-                self.rect.x = x
-                self.rect.y = y
-                if n:
-                    self.changeble = False
-            else:
-                self.chosen = not self.chosen
-                if self.changeble and self.chosen:
-                    self.rect.y += 2 * size + 20
-                    return 1
-                elif self.changeble:
-                    self.rect.y -= 2 * size + 20
-                    return -1
+            return self.change(n)
         return 0
-                # self.hidden = True
-                # x = self.rect.x
-                # y = self.rect.y
-                # self.image = Card_view.hide
-                # self.rect = self.image.get_rect()
-                # self.rect.x = x
-                # self.rect.y = y
 
-
-
-class CardBoard():
-    def __init__(self, width, height, left=80, top=10, size = 160):
-        self.left = left
-        self.top = top
-        self.width = width
-        self.size = size
-        self.height = height
-        self.board = [[0] * width for _ in range(height)]
-
-    def include(self, card, x, y):
-        self.board[y][x] = card
-
-    def render(self, screen):
-        for i in range(self.height):
-            for j in range(self.width):
-                if self.board[i][j]:
-                    x = (self.size * j) + self.left
-                    y = self.left + self.size * i
-                    pygame.draw.rect(screen, (50, 30, 40), (x, y, self.size // 2, self.size))
-                    pygame.draw.rect(screen, (80, 10, 40), (x, y, self.size // 2, self.size), 4)
-
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        if cell:
-            self.on_click(cell)
-
-    def get_cell(self, pos):
-        if not(self.board[1][(pos[0] - self.left) // self.size] and self.top <= pos[1] <= self.top + self.height * self.size):
-            return None
+    def change(self, n):
+        if self.hidden:
+            self.hidden = False
+            x = self.rect.x
+            y = self.rect.y
+            self.image = self.open
+            self.rect = self.image.get_rect()
+            self.rect.x = x
+            self.rect.y = y
+            if n:
+                self.changeble = False
+            return 0
         else:
-            x = (pos[0] - self.left) // self.size
-            y = (pos[1] - self.top) // self.size
-            return x, y
+            self.chosen = not self.chosen
+            if self.changeble and self.chosen:
+                self.rect.y += self.s[1] + 10
+                return 1
+            elif self.changeble:
+                self.rect.y -= self.s[1] + 10
+                return -1
 
-    def on_click(self, cell):
-        pass
+
+class Colors(pygame.sprite.Sprite):
+    def __init__(self, screen, x, y, color, *group):
+        super().__init__(*group)
+        self.color = color
+        self.image = utils.load_image(color)
+        self.image = pygame.transform.scale(self.image, (40, 40))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+    def update(self, *args):
+        if args and args[0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args[0].pos):
+            return self.color
 
 
 class Card():
