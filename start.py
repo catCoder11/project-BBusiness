@@ -15,7 +15,7 @@ class start_game():
         self.down.rect = self.down.image.get_rect()
         self.n = 3
     def draw(self, event):
-        self.screen.fill((50, 10, 20))
+        self.screen.fill((75, 15, 30))
         texts = ["начать", "Число игроков: " + str(self.n), "Выход"]
         for i in range(3):
             color = pygame.Color(10, 100, 0)
