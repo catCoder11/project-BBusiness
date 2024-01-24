@@ -4,11 +4,14 @@ import projectPicker
 import drawing
 import vote
 import start
-
+import map_tools
 if __name__ == '__main__':
     pygame.init()
-    pygame.display.set_caption('берите карты')
+    pygame.display.set_caption('абоба')
     screen = pygame.display.set_mode((900, 800))
+    x = map_tools.Map(screen, x=screen.get_width() // 2 - 250, y=screen.get_height() // 2 - 250)
+    x.run(1)
+    pygame.display.set_caption('берите карты')
     starter = start.start_game(screen)
     players = starter.run()
     if players:
