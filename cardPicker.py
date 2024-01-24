@@ -4,17 +4,14 @@ import random
 import pycards
 import utils
 
-sprites_cards = pygame.sprite.Group()
-
 
 class CardChooser():
-    def __init__(self, left=80, top=10, size = 160):
-        self.left = left
-        self.top = top
-        self.size = size
+    def __init__(self):
+        self.sprites_cards = pygame.sprite.Group()
 
     def render(self, screen):
-        sprites_cards.draw(screen)
+        screen.fill((75, 15, 30))
+        self.sprites_cards.draw(screen)
 
     def run(self, screen):
         count = 0
@@ -26,22 +23,22 @@ class CardChooser():
         given = [pycards.Card(el[1], "uno.png")
                  for el in cur.execute(f"SELECT * FROM cardNames WHERE id in ({', '.join(items)})").fetchall()]
         chosen = []
-        y = self.top + self.size
+        y = screen.get_height() // 2
         for i in range(5):
-            x = (self.size * i) + self.left
-            given[i].draw = pycards.Card_view(x, y, sprites_cards)
+            x = (screen.get_width() / 5) * i + ((screen.get_width() / 5) - 100) // 2
+            given[i].draw = pycards.Card_view(x, y, self.sprites_cards)
+            given[i].draw.rect.y -= given[0].draw.s[1] // 2
 
         while running and count != 2:
-            screen.fill((50, 10, 20))
             self.render(screen)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                     return False
                 for card in given:
-                    count += card.draw.update(0, self.size, event)
+                    count += card.draw.update(0, event)
             pygame.display.flip()
-        utils.cont(sprites_cards)
+        utils.cont(self.sprites_cards)
         for card in given:
             if card.draw.chosen:
                 chosen.append(card)
