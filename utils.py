@@ -5,8 +5,13 @@ import pygame
 
 pygame.init()
 pygame.display.set_caption("")
-size = width, height = 900, 860
+size = width, height = 900, 800
 screen = pygame.display.set_mode(size)
+
+
+class Player:
+    pass
+
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -22,3 +27,32 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+def cont(set):
+    cont = pygame.sprite.Sprite(set)
+    cont.image = load_image("continue.png")
+    t = cont.image.get_rect()
+    cont.rect = t
+    set.draw(screen)
+    screen.fill((50, 10, 20))
+    set.draw(screen)
+    pygame.display.flip()
+    running = True
+    MYEVENTTYPE = pygame.USEREVENT + 1
+    pygame.time.set_timer(MYEVENTTYPE, 3000)
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                return False
+            if event.type == pygame.MOUSEBUTTONDOWN and \
+                    cont.rect.collidepoint(event.pos) or event.type == MYEVENTTYPE:
+                running = False
+                return True
+
+def time(screen, timer):
+    font = pygame.font.Font(None, 50)
+    text = font.render(f"{timer // 60}: {timer % 60}", True, (150, 30, 200))
+    text_x = screen.get_width() // 2 - text.get_width() // 2
+    screen.blit(text, (text_x, 5))
+    pygame.display.flip()
