@@ -2,6 +2,7 @@ import random
 import sqlite3
 import pygame
 import utils
+import buttons
 # class Player:
 #     def __init__(self):
 #         self.money = 1000
@@ -75,32 +76,21 @@ def distribution(popul):
                young.get_count() * young.get_ability() + grand.get_count() * grand.get_ability()
     return [[round(stud.get_count() * popul), round(grand.get_count() * popul),
              round(mid.get_count() * popul), round(young.get_count() * popul)], buy_abil]
-#надо поменять
 
-# class Cell2:
-#     def __init__(self, max_size):
-#         self.population = random.randint(10, max_size)
-#         self.citizens, self.buy_ability = distribution(self.population)
-#         self.companies = []
-#         self.want_stud = 1
-#         self.want_grand = 1
-#         self.want_mid = 1
-#         self.want_young = 1
-#         self.most_wanted_change(1)
-#
-#     def __str__(self):
-#         return f'{[self.population, self.citizens, self.buy_ability]}'
-#
-#     def change_ability(self, diff):
-#         self.buy_ability = round(self.buy_ability / diff, 3)
-#         self.most_wanted_change(diff)
-#
-#     def most_wanted_change(self, coff):
-#         self.want_stud = self.citizens[0] / coff
-#         self.want_grand = self.citizens[1] / coff
-#         self.want_mid = self.citizens[2] / coff
-#         self.want_young = self.citizens[3] / coff
-
+class interact_button(pygame.sprite.Sprite):
+    def __init__(self, x, y, text, color, *group):
+        super().__init__(*group)
+        self.image = pygame.Surface([170, 100])
+        self.image.fill(color)
+        font = pygame.font.Font(None, 30)
+        text1 = font.render(text[0], True, (100, 255, 100))
+        self.image.blit(text1, (5, 5))
+        text2 = font.render(text[1], True, (100, 255, 100))
+        self.image.blit(text2, (5, 55))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.active = True
 
 class Company:
     def __init__(self, mapp):
@@ -146,55 +136,41 @@ class Cell(pygame.sprite.Sprite):
         color.hsva = (hsv[0], hsv[1], hsv[2] + 30, hsv[3])
         self.baza = pygame.sprite.Group()
         self.known = pygame.sprite.Group()
-        texts = [("Интерес", "населения"), ("Наиб.", "население"), ("Конкурентные", "компании"),
-                 ("Неинтересные", "темы"), ("Покупная", "способность")]
-        for i in range(5):
-            t = pygame.sprite.Sprite(self.baza)
-            t.image = pygame.Surface([170, 100])
-            t.image.fill(color)
-            font = pygame.font.Font(None, 30)
-            text1 = font.render(texts[i][0], True, (100, 255, 100))
-            t.image.blit(text1, (5, 5))
-            text2 = font.render(texts[i][1], True, (100, 255, 100))
-            t.image.blit(text2, (5, 55))
-            t.rect = t.image.get_rect()
-            t.rect.x = 5
-            t.rect.y = i * 110 + 10
+        self.known_count = 0
+        buttons.people_checker(5, 10, ("Основное", "население"), color, None, self.baza)
+        buttons.companies_checker(5, 120, ("Конкурентные", "компании"), color, None, self.baza)
+        buttons.interest_checker(5, 230, ("Интерес", "пенсионеров"), color,
+                                 ("пенсионеры", self.want_grand), self.baza)
+        buttons.interest_checker(5, 340, ("Интерес", "взрослых"), color,
+                                 ("взрослые", self.want_mid), self.baza)
+        buttons.interest_checker(5, 450, ("Интерес", "детей"), color,
+                                 ("дети", self.want_young), self.baza)
+        buttons.interest_checker(5, 560, ("Интерес", "студентов"), color,
+                                 ("студенты", self.want_stud), self.baza)
 
-    def update(self, stage, *args):
+    def update(self, stage, player, *args):
         if self.drawing:
-            self.draw(1)
+            self.draw(1, player)
         if args and args[0].type == pygame.MOUSEBUTTONDOWN:
             pos_in_mask = args[0].pos[0] - self.rect.x, args[0].pos[1] - self.rect.y
             if self.rect.collidepoint(args[0].pos) and self.mask.get_at(pos_in_mask):
                 self.drawing = True
             elif self.drawing and stage == 1:
-                i = 1
                 for el in self.baza:
-                    if i == 1 and el.rect.collidepoint(args[0].pos):
-                        print(1)
+                    t = el.update(*args)
+                    if t == 1:
                         break
-                    elif i == 2 and el.rect.collidepoint(args[0].pos):
-                        print(2)
+                    if t:
+                        buttons.info(self.screen.get_width() - 170, self.known_count * 50, t, self.known)
+                        self.known_count += 1
                         break
-                    elif i == 3 and el.rect.collidepoint(args[0].pos):
-                        print(3)
-                        break
-                    elif i == 4 and el.rect.collidepoint(args[0].pos):
-                        print(4)
-                        break
-                    elif i == 5 and el.rect.collidepoint(args[0].pos):
-                        print(self.buy_ability)
-                        break
-                    i += 1
                 else:
                     self.drawing = False
-            else:
-                self.drawing = False
 
-    def draw(self, stage):
-        pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, 180, 600), 4)
-        pygame.draw.rect(self.screen, self.color, (4, 4, 172, 592))
+    def draw(self, stage, player):
+        pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, 180, 680), 4)
+        pygame.draw.rect(self.screen, self.color, (4, 4, 172, 672))
+        self.known.draw(self.screen)
         if stage == 1:
             self.baza.draw(self.screen)
 
@@ -225,12 +201,14 @@ class Cell(pygame.sprite.Sprite):
 
 
 class Map:
-    def __init__(self, screen, x=0, y=0):
+    def __init__(self, screen):
         self.screen = screen
+        self.cont_group = pygame.sprite.Group()
+        self.cont = utils.Continuer(self.cont_group, y=self.screen.get_height() - 100)
         self.map = []
         self.map_sprites = pygame.sprite.Group()
-        self.x = x
-        self.y = y
+        self.x = x = screen.get_width() // 2 - 250
+        self.y = y = screen.get_height() // 2 - 250
         self.map.append(Cell(self.screen, x, y, "cell1.png", (260, 210), self.map_sprites))
         self.map.append(Cell(self.screen, x + 235, y, "cell2.png", (265, 110), self.map_sprites))
         self.map.append(Cell(self.screen, x + 274, y + 92, "cell3.png", (226, 94), self.map_sprites))
@@ -239,33 +217,33 @@ class Map:
         self.map.append(Cell(self.screen, x + 266, y + 205, "cell6.png", (234, 204), self.map_sprites))
         self.map.append(Cell(self.screen, x, y + 328, "cell7.png", (263, 172), self.map_sprites))
         self.map.append(Cell(self.screen, x + 268, y + 318, "cell8.png", (232, 182), self.map_sprites))
-
         self.enemies = [Company(self.map.copy()) for _ in range(random.randint(2, 4))]
         for i in self.enemies:
             for j in i.take_over:
                 j[0].companies.append(i)
                 j[0].change_ability(i.get_change())
 
-    def run(self, stage):
+    def run(self, stage, player):
         running = True
-        for el in self.map_sprites:
-            el.known
+        font = pygame.font.Font(None, 45)
+        text = font.render("player " + str(player), True, (100, 255, 100))
         while running:
-            self.draw(stage)
+            self.draw(stage, player, text)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 for cell in self.map_sprites:
-                    cell.update(stage, event)
+                    cell.update(stage, player, event)
+                if self.cont.update(event):
+                    running = False
 
-    def draw(self, stage):
+    def draw(self, stage, player, text):
         self.screen.fill((75, 15, 30))
+        self.cont_group.draw(self.screen)
         pygame.draw.rect(self.screen, (0, 0, 0), (self.x - 4, self.y - 4, 508, 508))
         self.map_sprites.draw(self.screen)
         for cell in self.map_sprites:
             if cell.drawing:
-                cell.draw(stage)
+                cell.draw(stage, player)
+        self.screen.blit(text, (self.screen.get_width() - 125, self.screen.get_height() - 50))
         pygame.display.flip()
-
-    def analysis(self):
-        pass
