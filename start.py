@@ -7,6 +7,7 @@ class start_game():
         self.screen = screen
         self.back = utils.load_image("background_button.png")
         self.buttons = pygame.sprite.Group()
+        self.exit = utils.Exit(screen.get_width(), self.buttons, s=40)
         self.up = pygame.sprite.Sprite(self.buttons)
         self.down = pygame.sprite.Sprite(self.buttons)
         self.up.image = pygame.transform.scale(utils.load_image("up.png"), (40, 40))
@@ -14,6 +15,7 @@ class start_game():
         self.up.rect = self.up.image.get_rect()
         self.down.rect = self.down.image.get_rect()
         self.n = 3
+
     def draw(self, event):
         self.screen.fill((75, 15, 30))
         texts = ["начать", "Число игроков: " + str(self.n), "Выход"]
@@ -55,7 +57,7 @@ class start_game():
         while running:
             for event in pygame.event.get():
                 x = self.draw(event)
-                if event.type == pygame.QUIT or not x:
+                if self.exit.update(event) or event.type == pygame.QUIT or not x:
                     running = False
                     return False
                 elif x == 2:

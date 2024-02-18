@@ -8,6 +8,8 @@ import utils
 class CardChooser():
     def __init__(self):
         self.sprites_cards = pygame.sprite.Group()
+        self.cont = utils.Continuer(self.sprites_cards)
+        self.cont.hide()
 
     def render(self, screen):
         screen.fill((75, 15, 30))
@@ -29,19 +31,28 @@ class CardChooser():
             given[i].draw = pycards.Card_view(x, y, self.sprites_cards)
             given[i].draw.rect.y -= given[0].draw.s[1] // 2
 
-        while running and count != 2:
+        while running:
+            if count == 2:
+                self.cont.show()
+            else:
+                self.cont.hide()
             self.render(screen)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                     return False
+                if count == 2 and self.cont.check(event):
+                    running = False
+
                 for card in given:
                     count += card.draw.update(0, event)
+
             pygame.display.flip()
-        utils.cont(self.sprites_cards)
+        # utils.cont(self.sprites_cards)
         for card in given:
             if card.draw.chosen:
                 chosen.append(card)
         return chosen
+
 
 

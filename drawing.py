@@ -7,7 +7,7 @@ class Drawer():
         pygame.display.set_caption('рисуйте')
         self.screen = screen
         self.buttons = pygame.sprite.Group()
-        self.timer = 90
+        self.timer = 60
         self.right, self.up = screen.get_size()
         self.screen2 = pygame.Surface((self.right - 100, self.up - 100))
         self.screen.fill((0, 0, 0))
@@ -18,6 +18,7 @@ class Drawer():
         self.screen.blit(self.screen2, (50, 50))
         pygame.draw.rect(self.screen, "white", ((50, 50), (self.right - 100, self.up - 100)), 2)
         utils.time(self.screen, self.timer)
+        pygame.display.flip()
 
     def play(self):
         x1, y1, w, h = 0, 0, 0, 0

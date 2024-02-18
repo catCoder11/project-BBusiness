@@ -47,10 +47,16 @@ class Students(Human):
 
 
 def distribution(popul):
-    stud = Students(random.randint(1, 3) / 10)
-    grand = Grand(random.randint(1, int(6 - (stud.get_count() * 10))) / 10)
-    mid = Mid(random.randint(1, int(7 - (grand.get_count() * 10 + stud.get_count() * 10))) / 10)
-    young = Young(1 - grand.get_count() - stud.get_count() - mid.get_count())
+    one = random.randint(1, 3) / 10
+    two = random.randint(1, int(6 - (one * 10))) / 10
+    three = random.randint(1, int(7 - (one * 10 + two * 10))) / 10
+    four = 1 - three - three - two
+    nation = [one, two, three, four]
+    random.shuffle(nation)
+    stud = Students(nation[0])
+    young = Grand(nation[1])
+    mid = Mid(nation[2])
+    grand = Young(nation[3])
     buy_abil = stud.get_count() * stud.get_ability() + mid.get_count() * mid.get_ability() + \
                young.get_count() * young.get_ability() + grand.get_count() * grand.get_ability()
     return [{"студенты": round(stud.get_count() * popul), "пенсионеры": round(grand.get_count() * popul),
@@ -79,14 +85,16 @@ class Cell(pygame.sprite.Sprite):
     def __init__(self, screen, x, y, key, s, player_count, *group, color=None, prod_cords=(10, 10)):
         super().__init__(*group)
         self.population = random.randint(1, 10) * 10
+        self.coff = [0 for _ in range(player_count)]
         self.citizens, self.buy_ability = distribution(self.population)
         self.companies = []
         self.known_comp = []
-        self.want_stud = 1
-        self.want_grand = 1
-        self.want_mid = 1
-        self.want_young = 1
-        self.most_wanted_change(1)
+        self.want_stud = [1 for _ in range(player_count)]
+        self.want_grand = [1 for _ in range(player_count)]
+        self.want_mid = [1 for _ in range(player_count)]
+        self.want_young = [1 for _ in range(player_count)]
+        for i in range(player_count):
+            self.most_wanted_change(i)
         self.screen = screen
         s = s[0] * screen.get_height() // 1000, s[1] * screen.get_height() // 1000
         self.image = pygame.transform.scale(utils.load_image(key), s)
@@ -132,31 +140,35 @@ class Cell(pygame.sprite.Sprite):
                 self.drawing = True
             elif self.drawing and stage == 1:
                 for el in self.baza:
-                    t = el.update(player - 1, money, *args)
+                    t = el.update(player, money, *args)
                     if t == 1:
                         break
                     if t:
-                        buttons.info(self.screen.get_width() - 180, self.known[player - 1][1] * 50 + 50,
-                                     t, self.known[player - 1][0], color=self.color)
-                        self.known[player - 1][1] += 1
+                        buttons.info(self.screen.get_width() - 180, self.known[player][1] * 50 + 50,
+                                     t, self.known[player][0], color=self.color)
+                        self.known[player][1] += 1
                         return -1
                 else:
                     self.drawing = False
             elif self.drawing and stage == 2:
-                make = self.maker.update(player - 1, money, *args)
-                deliver = self.delivery.update(player - 1, money, *args)
-                if make or deliver:
-                    if self.maker.check(player - 1, money) and self.delivery.check(player - 1, money):
-                        self.maker.change_active(player - 1)
-                        self.delivery.change_active(player - 1)
+                make = self.maker.update(player, money, *args)
+                deliver = self.delivery.update(player, money, *args)
+                if (make and money >= 2) or deliver:
+                    if self.maker.check(player, money) and self.delivery.check(player, money):
+                        self.maker.change_active(player)
+                        self.delivery.change_active(player)
                         step = self.screen.get_height() / 1000
                         size = self.screen.get_height() / 20
                         x, y = self.prod_cords[0] * step, self.prod_cords[1] * step
                         name, coff = ("zavod.png", make) if make else ("delivery.png", deliver)
                         img = pygame.transform.scale(utils.load_image(name), (size, size))
                         self.image.blit(img, (x, y))
-                        self.images[player - 1].blit(img, (x, y))
-                        return -1
+                        self.images[player].blit(img, (x, y))
+                        self.coff[player] = coff
+                        if make:
+                            return -2
+                        if deliver:
+                            return -1
                 else:
                     self.drawing = False
         return 0
@@ -164,14 +176,11 @@ class Cell(pygame.sprite.Sprite):
     def draw(self, stage, player):
         pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, self.size[0] + 8, (self.size[1] + 10) * 6 + 2), 4)
         pygame.draw.rect(self.screen, self.color, (0, 0, self.size[0] + 6, (self.size[1] + 10) * 6 + 1))
-        self.known[player - 1][0].draw(self.screen)
+        self.known[player][0].draw(self.screen)
         if stage == 1:
             self.baza.draw(self.screen)
         elif stage == 2:
             self.production.draw(self.screen)
-
-    def __str__(self):
-        return f'{[self.population, self.citizens, self.buy_ability]}'
 
     def get_company(self):
         if self.companies:
@@ -187,12 +196,17 @@ class Cell(pygame.sprite.Sprite):
         # self.buy_ability = round(self.buy_ability / diff, 3)
 
 
-    def most_wanted_change(self, coff):
-        interests = random.sample(range(1, 5), k=4)
-        self.want_stud = interests[0] / 5
-        self.want_grand = interests[1] / 5
-        self.want_mid = interests[2] / 5
-        self.want_young = interests[3] / 5
+    def most_wanted_change(self, i):
+        interest1 = random.randint(2, 4)
+        interest2 = random.randint(4, 8 - interest1)
+        interest3 = random.randint(10, 18 - interest2 - interest1)
+        interest4 = 20 - interest1 - interest2 - interest3
+        interests = [interest1, interest2, interest3, interest4]
+        random.shuffle(interests)
+        self.want_stud[i] = interests[0] * 5 / 100
+        self.want_grand[i] = interests[1] * 5 / 100
+        self.want_mid[i] = interests[2] * 5 / 100
+        self.want_young[i] = interests[3] * 5 / 100
 
 
 class Map:
@@ -234,7 +248,7 @@ class Map:
         running = True
         MYEVENTTYPE = 0
         for cell in self.map_sprites:
-            cell.image = cell.images[player - 1]
+            cell.image = cell.images[player]
         while running:
             self.draw(stage, player, player_list)
             for event in pygame.event.get():
@@ -262,7 +276,7 @@ class Map:
                 cell.draw(stage, player)
 
         font = pygame.font.Font(None, 45)
-        text = font.render("player " + str(player), True, (100, 255, 100))
+        text = font.render("player " + str(player + 1), True, (100, 255, 100))
         self.screen.blit(text, (self.screen.get_width() - 125, self.screen.get_height() - 50))
         text = font.render(player_list["adj"] + " " + player_list["noun"], True, (100, 255, 100))
         self.screen.blit(text, (self.screen.get_width() // 2 - text.get_width() // 2, 0))
